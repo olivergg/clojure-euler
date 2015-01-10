@@ -1,5 +1,8 @@
 (ns experiment.core)
 
+(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+
+
 (defn foo
   "I don't do a whole lot."
   [x]
@@ -8,12 +11,14 @@
 (def x 3)
 
 
-(def factorial
-  (fn [n]
-    (loop [cnt n, acc 1]
-      (if (= 0 cnt)
-        acc
-        (recur (dec cnt) (* acc cnt))))))
+(defn factorial
+  [n]
+  (loop [cnt n, acc 1]
+    (if (= 0 cnt)
+      acc
+      (recur (dec' cnt) (*' acc cnt)))
+    )
+  )
 
 
 (factorial 6)
@@ -863,6 +868,7 @@ i = index of rows, j index of column
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+// we assume there is no bigint, to 2^1000 is too big to be computed directly.
 (defn dble
   "For a number x stored as a list of its decimal digits, compute 2x (in the same format)"
   [coll]
@@ -1052,9 +1058,8 @@ i = index of rows, j index of column
 ;;; problem 19
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
-;; 7 janvier 1900 was a sunday
+;; january 7th 1900 was a sunday
+;; january 6th 1901 was a sunday
 (defn iscentury
   [year]
   (= 0 (mod year 100))
@@ -1073,24 +1078,149 @@ i = index of rows, j index of column
 (assert (= true (isleapyear 2000)))
 (assert (= false (isleapyear 1900)))
 
-(defn incl-range
-  [s,f]
-  (range s (inc f))
+(defn daysinmonth
+  [n,year]
+  (cond
+    (or (= n 9) (= n 4) (= n 6) (= n 11)) 30
+    (= n 2) (if (isleapyear year) 29 28) 
+    :else 31
+    )
+  )
+(assert (= 31 (daysinmonth 1 1900)))
+(assert (= 30 (daysinmonth 11 1900)))
+(assert (= 28 (daysinmonth 2 1900)))
+(assert (= 29 (daysinmonth 2 1996)))
+
+(defn add 
+  "Add the given number of days to the given date. Returns a (day,month,year) list"
+  [day month year nbdays]
+  (def daysinm (daysinmonth month year))
+  (def diff (- daysinm (+ day nbdays)))
+  (def remain (- nbdays (- daysinm day) 1));; remove 1 to the remain, since the first day of the next month is counted.
+  (if (>= diff 0)
+    (list (+ day nbdays) month year)
+    (do
+      (def incmonth (inc month))
+      (def alteredmonth (if (= incmonth 13) 1 incmonth))
+      (def alteredyear (if (= incmonth 13) (inc year) year))
+      (recur 1 alteredmonth alteredyear remain)
+      )
+    )
+  )
+(time (loop [iter 1, count 0]
+        (def res (add 6 1 1901 (* 7 iter)))
+          (if (= 2001 (last res))
+            count 
+            (if (= 1 (first res));; first day of the month
+              (recur (inc iter) (inc count))
+              (recur (inc iter) count)
+              )
+            )
+        ))
+;171
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; problem 20
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+// we assume there is no bigint, to 100! is too big to be computed directly.
+// hence, we reimplement artithmetic operation (* and +) on the list representation of a number.
+// 98 is represented by '(8 9), 7 by '(7 0) (we use a reverse notation to simplify list manipulation).
+
+(defn sdiv
+  [n,d]
+  (list (quot n d) (mod n d))
   )
 
-(incl-range 1 31)
-(incl-range 1 28)
 
-
-(defprotocol IDate
-   (printdate [this])
-   (add [this,nbdays])
-   )
-
-(defrecord Date [day month year]
-  IDate
-  (printdate [this] (println day "/" month "/" year))
-  (add [this,other] (printdate other))
+(defn decimalsplit
+  [n]
+  (sdiv n 10)
   )
 
-(add (->Date 7 1 1900) (->Date 7 1 1901))
+(defn generate0 [c] (map (fn [x] 0) (range 0 c)))
+
+(defn conjj
+  [coll,x]
+  (if (zero? x)
+    coll
+    (conj coll x)
+    )
+  )
+  
+  
+(defn aline
+  [initx, initcoll]
+  
+  (loop [x initx,remain 0, coll initcoll,out ()]
+    (if (empty? coll)
+      (reverse (conjj out remain))
+      (do
+        (def y (first coll))
+        (def xy (+ (* x y) remain))
+        (let [[xydec xyunit] (decimalsplit xy)]
+          (recur x xydec (rest coll) (conj out xyunit))
+          )
+        )
+      )
+    )
+  )
+
+(defn thelines
+  [initxcoll, initcoll]
+  (loop [iter 0, xcoll initxcoll, coll initcoll, out ()]
+    (if (empty? xcoll)
+      out
+      (do
+        (def fi (first xcoll))
+        (def zeros (generate0 iter))
+        (def newout (if (= 0 iter)
+                      (conj out (aline fi coll))
+                      (conj out (concat zeros (aline fi coll)))
+                      ))
+        (recur (inc iter) (rest xcoll) coll newout)
+        )
+      )
+    )
+  )
+
+(defn sumcoll
+  [initcoll1, initcoll2]
+  (loop [coll1 initcoll1, coll2 initcoll2, remain 0, out ()]
+    (cond
+      (and (empty? coll1) (empty? coll2)) (reverse (conjj out remain))
+      :else (do
+              (def fcol1 ((fnil identity 0) (first coll1)))
+              (def fcol2 ((fnil identity 0) (first coll2)))
+              (def decsplit (decimalsplit (+ fcol1 fcol2 remain)))
+              (recur (rest coll1) (rest coll2) (first decsplit) (conj out (last decsplit)))
+              )
+      )
+    )
+  )
+  
+
+(defn productcoll
+  [coll1, coll2]
+  (reduce sumcoll (thelines coll1 coll2))  
+  )
+
+(defn h [n] (reverse (decimalsplit n)))
+
+(def numberstoreduce (map (fn [x] (h (- x))) (range -99 -1)))
+
+(def outlist (reduce productcoll numberstoreduce))
+
+(reduce + outlist)
+; 648
+
+;;; faster solution with bigint....
+;(loop [f (factorial 99) sum 0]
+;  (if (> f 0)
+;    (recur (quot f 10) (+ sum (mod f 10)))
+;    sum
+;    )
+;  )

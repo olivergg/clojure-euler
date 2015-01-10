@@ -1,5 +1,8 @@
 (ns experiment.core)
 
+(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+
+
 (defn foo
   "I don't do a whole lot."
   [x]
@@ -13,7 +16,7 @@
   (loop [cnt n, acc 1]
     (if (= 0 cnt)
       acc
-      (recur (dec cnt) (* acc cnt)))
+      (recur (dec' cnt) (*' acc cnt)))
     )
   )
 
@@ -865,6 +868,7 @@ i = index of rows, j index of column
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+// we assume there is no bigint, to 2^1000 is too big to be computed directly.
 (defn dble
   "For a number x stored as a list of its decimal digits, compute 2x (in the same format)"
   [coll]
@@ -1122,8 +1126,9 @@ i = index of rows, j index of column
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-(defmacro dbg[x] `(let [x# ~x] (println "dbg:" '~x "=" x#) x#))
+// we assume there is no bigint, to 100! is too big to be computed directly.
+// hence, we reimplement artithmetic operation (* and +) on the list representation of a number.
+// 98 is represented by '(8 9), 7 by '(7 0) (we use a reverse notation to simplify list manipulation).
 
 (defn sdiv
   [n,d]
@@ -1175,29 +1180,22 @@ i = index of rows, j index of column
         (def newout (if (= 0 iter)
                       (conj out (aline fi coll))
                       (conj out (concat zeros (aline fi coll)))
-;                      (conj out (aline fi coll))
                       ))
         (recur (inc iter) (rest xcoll) coll newout)
-        
         )
       )
     )
   )
 
-
-(thelines '(0 1) '(2 3))
-
-(first ())
-
 (defn sumcoll
   [initcoll1, initcoll2]
   (loop [coll1 initcoll1, coll2 initcoll2, remain 0, out ()]
     (cond
-      (and (empty? coll1) (empty? coll2)) (conjj out remain)
+      (and (empty? coll1) (empty? coll2)) (reverse (conjj out remain))
       :else (do
               (def fcol1 ((fnil identity 0) (first coll1)))
               (def fcol2 ((fnil identity 0) (first coll2)))
-              (def decsplit (decimalsplit (+ fcol1 fcol2)))
+              (def decsplit (decimalsplit (+ fcol1 fcol2 remain)))
               (recur (rest coll1) (rest coll2) (first decsplit) (conj out (last decsplit)))
               )
       )
@@ -1205,8 +1203,24 @@ i = index of rows, j index of column
   )
   
 
-(rest (rest (rest '(0 1 2))))
-(sumcoll '(9 1 2) '(1 8))
+(defn productcoll
+  [coll1, coll2]
+  (reduce sumcoll (thelines coll1 coll2))  
+  )
 
-(+ 219 81)
+(defn h [n] (reverse (decimalsplit n)))
 
+(def numberstoreduce (map (fn [x] (h (- x))) (range -99 -1)))
+
+(def outlist (reduce productcoll numberstoreduce))
+
+(reduce + outlist)
+; 648
+
+;;; faster solution with bigint....
+;(loop [f (factorial 99) sum 0]
+;  (if (> f 0)
+;    (recur (quot f 10) (+ sum (mod f 10)))
+;    sum
+;    )
+;  )

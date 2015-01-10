@@ -1,10 +1,7 @@
-# experiment
+# clojure-euler
 
-A Clojure library designed to ... well, that part is up to you.
+A project to learn Clojure by solving Project Euler problems.
 
-## Usage
-
-FIXME
 
 ## License
 
