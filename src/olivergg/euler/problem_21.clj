@@ -7,35 +7,51 @@
 ;;; problem 21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(factor 10000)
-(rhofactor 5000)
-
-(def n 9999)
-
 (defn divisor
   [n]
-  (loop [iter 0
-         maxdiv 1
-         out #{1}
-         ]
-          (if (<= maxdiv (/ n 2))
-            (do
-              (def fac (rhofactor n))
-              (recur (inc iter) (max fac maxdiv) (conj out fac))
-              )
-            (disj out n)
-            )
-          )
-  )
-
-
-(disj #{1 2 3} 3)
-
-(sort (divisor 9999))
-
-(loop [iter 220]
-  (when (> iter 0)
-    (println "iter " iter "sum of div " (reduce + (divisor iter)))
-    (recur (dec iter))
+  (loop [i 1, out #{1}]
+    (def remain (mod n i))
+    (def quoti (quot n i))
+    (if (= i n)
+      (disj out n)
+      (if (zero? remain)
+        (recur (inc i) (conj out remain quoti))
+        (recur (inc i) out)
+        )
+      )
     )
   )
+
+
+(time (loop [iter 1000, itertosum {}, sumtoiter {}]
+        (if (> iter 1)
+          (do
+            (def summm (reduce + (divisor iter)))
+            ;(println "iter " iter "sum of div " summm)
+            (recur (dec iter) (conj itertosum {iter summm}) (conj sumtoiter {summm iter}))
+            )
+          (do
+            (println "itertosum " (sort itertosum))
+            (println "sumtoiter " (sort sumtoiter))
+            (loop [i 220]
+              (if (= 0 i)
+                (println "done")
+                (do
+                  (when (= i (itertosum (itertosum i)))
+                    (println i)
+                    )
+                  (recur (dec i))
+                  )
+
+                )
+              )
+
+            )
+          )
+        )
+      )
+
+
+
+
+
