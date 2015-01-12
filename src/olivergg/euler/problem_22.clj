@@ -16,7 +16,7 @@
   [string]
   (reduce + (map (fn [x] (alphab-pos x)) string))
   )
-(assert (= 53 (alphavalue "\"COLIN")))
+(assert (= 53 (alphavalue "COLIN")))
 
 (with-open [rdr (reader (io/resource "p022_names.txt"))]
   (doseq [line (line-seq rdr)]
