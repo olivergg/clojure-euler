@@ -7,20 +7,7 @@
 ;;; problem 21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn properdivisors
-  [n]
-  (loop [i 1, out #{1}]
-    (def remain (mod n i))
-    (def quoti (quot n i))
-    (if (= i n)
-      (disj out n)
-      (if (zero? remain)
-        (recur (inc i) (conj out remain quoti))
-        (recur (inc i) out)
-        )
-      )
-    )
-  )
+
 
 (defn computesumdiv-untiln
   [n]

@@ -129,4 +129,46 @@
     )
   )
 
+(defn properdivisors
+  [n]
+  (if (> n 0)
+    (loop [i 1, out #{1}]
+      (def remain (mod n i))
+      (def quoti (quot n i))
+      (if (= i n)
+        (disj out n)
+        (if (zero? remain)
+          (recur (inc i) (conj out remain quoti))
+          (recur (inc i) out)
+          )
+        )
+      )
+    #{}
+    )
+  )
 
+(defn  sumproperdivisor
+  [n]
+  (reduce + (properdivisors n))
+  )
+
+(def sumproperdivisor-memo (memoize sumproperdivisor))
+
+(defn isabundant
+  [n]
+  (> (sumproperdivisor-memo n) n)
+  )
+
+(defn isdeficient
+  [n]
+  (< (sumproperdivisor-memo n)  n)
+  )
+
+(defn isperfect
+  [n]
+  (= (sumproperdivisor-memo n)  n)
+  )
+
+(assert (isabundant 12))
+(assert (isperfect 28))
+(assert (isdeficient 13))
