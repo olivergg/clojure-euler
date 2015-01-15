@@ -6,18 +6,6 @@
 ;;; problem 12
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn countdiv
-  "returns the number of divisors of n.
-   if prime factorization of n is
-   n = A^a x B^b x C^c x ...
-   then, the number of divisors is (a+1)(b+1)(c+1)...
-"
-  [n]
-  (if (< n 2)
-    1
-    (reduce * (map (fn [x] (inc (val x))) (frequencies (factor n))))
-    )
-  )
 
 (defn tn
   "nth triangular number"
@@ -39,4 +27,3 @@
              )
       )
 ; 76576500 (the 12376th triangular number)
-

@@ -69,33 +69,16 @@
   )
 
 (defn factor
-  "prime factorization by division trial"
-  [n]
-  (if (isprime n)
-    (list n)
-    (loop [x n,
-           currentprime 2,
-           outfactors ()]
-      (cond
-        (> currentprime (Math/sqrt n)) (do
-                                         ;(println "end " currentprime "because square root of x " (Math/sqrt n) " is less than "currentprime )
-                                         outfactors
-                                         )
-        (zero? (mod x currentprime))
-        (do
-          ;(println "current prime is " currentprime "and outfactors are " outfactors)
-          (recur (quot x currentprime) currentprime (conj outfactors currentprime))
-          )
-        :else
-        (recur n (nextprime currentprime) outfactors)
-        )
+  [initn]
+  (loop [n initn k 2 acc ()]
+    (if (= 1 n)
+      acc
+      (if (= 0 (mod n k))
+        (recur (quot n k) k (conj acc k))
+        (recur n (inc k) acc))
       )
     )
   )
-
-
-
-
 
 
 (defn gcd
@@ -147,28 +130,60 @@
     )
   )
 
-(defn  sumproperdivisor
+(defn countdiv
+  "returns the number of divisors of n.
+   if prime factorization of n is
+   n = A^a x B^b x C^c x ...
+   then, the number of divisors is (a+1)(b+1)(c+1)...
+"
+  [n]
+  (if (< n 2)
+    1
+    (reduce * (map (fn [x] (inc (val x))) (frequencies (factor n))))
+    )
+  )
+
+
+(defn apply-pow [base exp]
+  (apply *' (repeat exp base)))
+
+
+
+(defn sumproperdivisor
+  "returns the sum of proper divisors of n.
+  if prime factorization of n is
+  n = A^a x B^b x C^c x ...
+  then the sum of the proper divisors is (A^(a+1)-1 / A-1) x (B^(b+1)-1 / B -1) x ...
+  "
+  [n]
+  (- (reduce * (map (fn [x]
+                      (let [A (key x)
+                            a (val x)]
+                        (quot (- (apply-pow A (+ a 1)) 1) (- A 1)))
+                      )
+                    (frequencies (factor n))
+                    )
+             )
+     n)
+  )
+
+(defn slowsumproperdivisor
   [n]
   (reduce + (properdivisors n))
   )
 
+
+(assert (= (reduce + (properdivisors 100)) (sumproperdivisor 100)))
+(assert (= (reduce + (properdivisors 28)) (sumproperdivisor 28)))
+(assert (= (reduce + (properdivisors 28123)) (sumproperdivisor 28123)))
+
+
+(def slowsumproperdivisor-memo (memoize slowsumproperdivisor))
 (def sumproperdivisor-memo (memoize sumproperdivisor))
 
 (defn isabundant
   [n]
-  (> (sumproperdivisor-memo n) n)
-  )
-
-(defn isdeficient
-  [n]
-  (< (sumproperdivisor-memo n)  n)
-  )
-
-(defn isperfect
-  [n]
-  (= (sumproperdivisor-memo n)  n)
+  (and (> n 0) (> (sumproperdivisor-memo n) n))
   )
 
 (assert (isabundant 12))
-(assert (isperfect 28))
-(assert (isdeficient 13))

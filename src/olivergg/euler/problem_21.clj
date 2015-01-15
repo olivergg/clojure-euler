@@ -7,14 +7,12 @@
 ;;; problem 21
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (defn computesumdiv-untiln
   [n]
   (loop [iter n, itertosum {}]
     (if (> iter 1)
       (do
-        (def sumofdiv (reduce + (properdivisors iter)))
+        (def sumofdiv (sumproperdivisor iter))
         (recur (dec iter) (conj itertosum {iter sumofdiv}))
         )
       itertosum
