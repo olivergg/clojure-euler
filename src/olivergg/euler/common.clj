@@ -187,3 +187,17 @@
   )
 
 (assert (isabundant 12))
+
+
+(defn tobase10
+  [initn]
+  (loop [n initn, out ()]
+    (if (= n 0)
+      out
+      (recur (quot n 10) (conj out (mod n 10)))
+      )
+    )
+  )
+
+
+(assert (= '(1 2 3) (tobase10 123)))
