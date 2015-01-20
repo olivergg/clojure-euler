@@ -1,7 +1,5 @@
 (ns olivergg.euler.problem_25
   (:require [olivergg.euler.common :refer :all]
-            [clojure.set :refer :all]
-            [clojure.math :refer :all]
             ))
 
 
