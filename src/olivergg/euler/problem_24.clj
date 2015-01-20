@@ -9,65 +9,23 @@
 ;;; problem 24
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(defn firstofgroup
-  [digits, start]
-  (def digitssize (count digits))
-  (def firstidx (+ 1
-                   (* start (factorial (dec digitssize))
-                      )
-                   )
-    )
-  {:firstidx firstidx :item (conj (sort (disj digits start)) start)}
-  )
-
-(defn lastofgroup
-  [digits, start]
-  (def digitssize (count digits))
-  (def lastidx (+ (factorial (dec digitssize))
-              (* start (factorial (dec digitssize))
-              )
-    )
-  )
-  {:lastidx lastidx :item (conj (sort-by (fn[x] (- x)) (disj digits start)) start)}
-  )
-
-(def digitsset (sorted-set 0 1 2))
-; 1 => 0 1 2
-; 2 => 0 2 1
-; 3 => 1 0 2
-; 4 => 1 2 0
-; 5 => 2 0 1
-; 6 => 2 1 0
-
-(defn findindex
-  [initdigitset, tofound]
-  (loop [set initdigitset, currentstart 0, currentindex 1]
-    (println "set " set "currentstart " currentstart " currentindex " currentindex)
-    (def g (lastofgroup set currentstart))
-    (cond
-      (>= tofound currentindex) (recur set (inc currentstart) (+ currentindex (:lastidx g)))
-      (< tofound currentindex) (recur (disj set currentstart) 0 (+ currentindex (:lastidx g)))
-      :else (println "found")
+(defn findnthperm
+  [initdigitset, initidx]
+  (loop [currentset initdigitset, currentindex initidx, out ()]
+    (if (= 1 (count currentset))
+      (reverse (conj out (first currentset)))
+      (do
+        (def setsize (count currentset))
+        (def groupsize (/ (factorial setsize) setsize))
+        (def groupnum (int (Math/ceil (/ currentindex groupsize))))
+        (def digittoconj (nth (vec currentset) (- groupnum 1)))
+        (def indexoffirstelemofgroup (+ (* (- groupnum 1) groupsize) 1))
+        (def newindex (+ (- currentindex indexoffirstelemofgroup) 1))
+        (recur (disj currentset digittoconj) newindex (conj out digittoconj))
+        )
       )
     )
   )
 
-
-(lastofgroup digitsset 1)
-
-
-(defn findgroupat
-  [digitsset, n]
-  (loop [i 0]
-    (def lg (lastofgroup digitsset i))
-    (if (> (:lastidx lg) n)
-      (mod (factorial (count digitsset)) (:lastidx lg))
-      (recur (inc i))
-      )
-    ;(lastofgroup digitsset 1)
-    ;(lastofgroup digitsset 2)
-    )
-  )
-;(findindex digitsset 5)
-(findgroupat digitsset 5)
+(findnthperm (sorted-set 0 1 2 3 4 5 6 7 8 9) 1000000)
+;(2 7 8 3 9 1 5 4 6 0)
