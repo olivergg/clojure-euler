@@ -16,12 +16,11 @@
 
 ;; must be between 100 x 100 and  999 x 999
 ;; more likely to be closest to 1000000 so we start at the end (using negative index in the range).
-(first
-  (for [i (range -1000 -100)
-        j (range -1000 -100)
-        :let [n (* (- i) (- j))]
-        :when (ispalindromic n)]
-    {:n n :i (- i) :j (- j)}))
+(first (sort-by (fn [x] (- (:n x))) (for [i (range -1000 -1)
+                                          j (range -1000 -1)
+                                          :let [n (* (- i) (- j))]
+                                          :when (and (ispalindromic n))]
+                                      {:n n :i (- i) :j (- j)}))
+       )
 
-; 580085 =  995 x 583
-
+; {:n 906609, :i 993, :j 913}
