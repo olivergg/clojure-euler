@@ -11,7 +11,7 @@
   "binomial coefficients (For any set containing n elements, the number of distinct k-element subsets of it that can be formed) "
   [n,k]
   (if (>= n k)
-    (/ (factorial n) (* (factorial (- n k)) (factorial k)))
+    (quot (factorial n) (*' (factorial (-' n k)) (factorial k)))
     1)
   )
 
@@ -24,8 +24,8 @@
 ; namely this is (6
 ;                 3 )
 ;
-(cnk 20 10)
-;184756
+(cnk 40 20)
+;137846528820N
 
 
 
