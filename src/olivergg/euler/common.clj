@@ -22,6 +22,7 @@
     (= n 1) false
     (= n 2) true
     (= n 3) true
+    (< n 0) false
     (= 0 (mod n 2)) false
     :else (loop [start 3
                  acc true]
