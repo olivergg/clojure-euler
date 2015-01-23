@@ -32,5 +32,5 @@
 
 (assert (= 101 (+ (sumforodd 1) (sumforodd 3) (sumforodd 5))))
 
-(reduce + (map (fn[x] (sumforodd x)) (range 1 1002 2)))
+(reduce + (map sumforodd (range 1 1002 2)))
 ;669171001
