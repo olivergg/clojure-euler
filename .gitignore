@@ -21,3 +21,6 @@ pom.xml.asc
 .lein-plugins/
 .lein-failures
 >>>>>>> 25fbb63b4e768fc195981fa2cea9d5eddef20e79
+.idea
+bin/
+*.iml
