@@ -35,10 +35,10 @@
 ; the product must be strictly less than 10000....otherwise it would have 5 digits, and
 ; its minimal value would be 12345 which is greater than the max value we can achieve with
 ; [][]x[][] or [][][]x[] ie 98*76 or 987*6
-; we stil need to proove that the multiplier/multiplicand cannot be greater than 2345
+; we stil need to prove that the multiplier/multiplicand cannot be greater than 2345
 ; (* 1 2345) => not possible (same digits)
-; (* 6 2345) more than 4 digits  => not possible
-; (* 16 2345) more than 3 digits => not possible.
+; (* 6 2345) (which is the smallest valid combination) more than 4 digits  => not possible
+; (* 16 2345) (which is the smallest valid combination) more than 3 digits => not possible.
 ; etc..
 (time (reduce + (into #{} (map (fn [x] (:prod x)) (for [i (range 1 2345)
                                                         j (range 1 2345)
