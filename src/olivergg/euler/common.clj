@@ -12,6 +12,7 @@
       (recur (dec' cnt) (*' acc cnt)))
     )
   )
+(defn ![n] (factorial n))
 
 
 (defn isprime
