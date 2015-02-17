@@ -201,5 +201,13 @@
     )
   )
 
+(defn frombase10
+  [coll]
+  (def size (count coll))
+  (reduce + (map-indexed (fn[idx,val] (* val (apply-pow 10 (- (dec size) idx)))) coll))
+  )
+
+(assert (= 123 (frombase10 [1 2 3])))
+
 
 (assert (= '(1 2 3) (tobase10 123)))
