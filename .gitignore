@@ -25,3 +25,5 @@ pom.xml.asc
 bin/
 *.iml
 .settings
+.project
+.classpath
