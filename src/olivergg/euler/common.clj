@@ -211,3 +211,18 @@
 
 
 (assert (= '(1 2 3) (tobase10 123)))
+
+
+(defn genpermut-apply
+  "Apply the function f to each permutation of the given set"
+  ([someset f] (genpermut-apply someset () f))
+  ([someset outx f]
+   (cond
+     (empty? someset) (f outx)
+     :else (map (fn [x] (genpermut-apply (disj someset x) (conj outx x) f)) someset)
+     )
+    )
+  )
+
+(defn parse-int [s]  (Long. (re-find  #"\d+" s )))
+
