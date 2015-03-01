@@ -8,16 +8,6 @@
 ;;; problem 41
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defn genpermut-apply
-  "Apply the function f to each permutation of the given set"
-  ([someset f] (genpermut-apply someset () f))
-  ([someset outx f]
-   (cond
-     (empty? someset) (f outx)
-     :else (map (fn [x] (genpermut-apply (disj someset x) (conj outx x) f)) someset)
-     )
-    )
-  )
 
 (defn genperm
   [n]
@@ -28,13 +18,13 @@
   )
 
 (time (do
-        (count (filter (fn [x] (isprime x)) (genperm 9)))
-        ;0
-        (count (filter (fn [x] (isprime x)) (genperm 8)))
-        ;0
+        ; hint : + is commutative
+        (= 0 (mod (+ 9 8 7 6 5 4 3 2 1) 3)) ;true => all 9 digits pandigital are divisible by 3
+        (= 0 (mod (+ 8 7 6 5 4 3 2 1) 3)) ;true => all 8 digits pandigital are divisible by 3
+        (= 0 (mod (+ 7 6 5 4 3 2 1) 3))
         (count (filter (fn [x] (isprime x)) (genperm 7)))
 
-        (last (sort (filter (fn [x] (isprime x)) (genperm 7))))
+        (apply max (filter (fn [x] (isprime x)) (genperm 7)))
         )
       )
 ;7652413
