@@ -31,7 +31,7 @@
 ; still need to prove that D is minimal for the first encountered solution....
 (first (for [i rangetoiterate
              j rangetoiterate
-             :when (and (< j i) (ispentagonal (+ i j)) (ispentagonal (- i j)))
+             :when (and (< j i) (ispentagonal (- i j)) (ispentagonal (+ i j)))
              ]
            {:i i :j j :D (Math/abs (- i j))}
          )
