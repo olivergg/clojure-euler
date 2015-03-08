@@ -22,7 +22,7 @@
          )
   )
 
-(first (for [i (filter #(not (isprime %))  (range 7 30000 2))
+(first (for [i (filter #(not (isprime %))  (range 7 Double/POSITIVE_INFINITY 2))
              :when (nil? (isdecomp i))]
          i
          )
