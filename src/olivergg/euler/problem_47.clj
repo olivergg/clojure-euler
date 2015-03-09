@@ -30,10 +30,10 @@
 
 (time (first (for [i (range 1 200000)
              :when (and
-                     (hasmemo i 4)
-                     (hasmemo (+ i 1) 4)
-                     (hasmemo (+ i 2) 4)
-                     (hasmemo (+ i 3) 4)
+                     (hasKDistinctFactor i 4)
+                     (hasKDistinctFactor (+ i 1) 4)
+                     (hasKDistinctFactor (+ i 2) 4)
+                     (hasKDistinctFactor (+ i 3) 4)
                       )
              ]
          i
