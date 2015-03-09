@@ -28,10 +28,6 @@
     )
   )
 
-(sumproperdivisor (! 12))
-
-(def hasmemo hasKDistinctFactor)
-
 (time (first (for [i (range 1 200000)
              :when (and
                      (hasmemo i 4)
