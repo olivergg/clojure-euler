@@ -201,6 +201,17 @@
     )
   )
 
+
+(defn tobase2
+  [initn]
+  (loop [n initn, out ()]
+    (if (= n 0)
+      out
+      (recur (quot n 2) (conj out (mod n 2)))
+      )
+    )
+  )
+
 (defn frombase10
   [coll]
   (def size (count coll))
