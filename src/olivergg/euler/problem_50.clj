@@ -18,18 +18,12 @@
 ;
 ;Which prime, below one-million, can be written as the sum of the most consecutive primes?
 
-(for [i (filter #(isprime %) (range 1 20))]
-  (println i)
-  )
-
-
-(def primes (filter #(isprime %) (range 1 Double/POSITIVE_INFINITY)))
 
 (defn cumulsum
   [initcoll]
   (loop [coll initcoll, cumulsum 0, out []]
     (cond
-      (empty? coll) (conj out cumulsum)
+      (empty? coll) (subvec (conj out cumulsum) 1)
       :else (recur (rest coll) (+ cumulsum (first coll)) (conj out cumulsum))
       )
     )
@@ -41,87 +35,81 @@
   )
 
 
-(filter #(< % 100000) (cumulsumbetween 2 1000000))
+(cumulsumbetween 2 1000)
+(drop 0 (map #(- % 0) (cumulsumbetween 2 1000)))
+(cumulsumbetween 3 1000)
+(drop 1 (map #(- % 2) (cumulsumbetween 2 1000)))
+(cumulsumbetween 5 1000)
+(drop 2 (map #(- % 5) (cumulsumbetween 2 1000)))
+(cumulsumbetween 7 1000)
+(drop 3 (map #(- % 10) (cumulsumbetween 2 1000)))
 
-(.indexOf (list 1 2 3) 3)
 
 
-(defn bach[n]
-  (/ (* (* n n ) (Math/log n) )2)
+(defn findlastcurr
+  [initcoll, someprimes, n]
+  (loop [coll initcoll
+         iter 0
+         lastvalidelem -1]
+    (cond
+      (or (empty? coll) (>= iter n)) {:item lastvalidelem :idx (dec iter)}
+      :else (do
+              (recur (rest coll)
+                     (if (and (isprime (first coll)) (< (first coll) n)) (inc iter) iter)
+                     (if (and (isprime (first coll)) (< (first coll) n))  (first coll) lastvalidelem ))
+
+              )
+
+      )
+    )
   )
 
-
-(bach 4)
-(map #(int (bach %)) (range 1 1000))
-
-
-(def memoisprime (memoize isprime))
+(filter #(and (contains? initprimestoiter %) (< % 1000)) (cumulsumbetween 2 1000))
+(findlastcurr  (cumulsumbetween 2 1000) (generate-prime-numbers 1000 2) 1000)
 
 
 (defn findbelow
   [n]
-  (def initprimestoiter (into (sorted-set) (generate-prime-numbers n 2)))
-  (loop [primestoiter initprimestoiter, maxsize 0, current ()]
+  (def initprimestoiter (time (into (sorted-set 0) (generate-prime-numbers n 2))))
+  (def initcsumbetween (time (into [0] (cumulsumbetween 2 n))))
+  (loop [c 0 primestoiter initprimestoiter, maxsize 0, current 0]
     (def iter (first primestoiter))
-    (println "iter " iter "maxsize " maxsize "  current " current)
     (cond
-      (nil? iter) {:length maxsize :current (last current)}
-      :else
-      (do
-        (def csumbetween (into [] (cumulsumbetween iter n)))
-        (def curr (filter #(and (contains? initprimestoiter %) (< % n)) csumbetween))
-        (def i (.indexOf csumbetween (last curr)))
-        (recur (rest primestoiter)
-               ;(max maxsize (count curr)) curr
-               (if (> i maxsize)
-                 i
-                 maxsize
-                 )
-               (if (> i maxsize)
-                 curr
-                 current
-                 )
-               )
-        )
+      (nil? iter) {:length maxsize :current (dbg current) :count (dbg c)}
+      :else (do
+              (def csumbetween  (drop c (map #(- % (get initcsumbetween c)) (subvec initcsumbetween 1))))
+              ;(def curr (filter #(and (contains? initprimestoiter %) (< % n)) csumbetween))
+              ;(def i  (time ((fnil identity 0) (first (indexes-of (last curr) csumbetween )))))
+              ;(def i (count curr))
+              ;(println csumbetween)
+              ;(println (last curr))
+              ;(def lll (time (last curr)))
+              (def ff (findlastcurr csumbetween initprimestoiter n))
+              (def i (:idx ff))
+              ;(prn "c " c)
+              ;(prn "---")
+              (recur
+                (inc c)
+                (rest primestoiter)
+                ;(max maxsize (count curr)) curr
+                (if (> i maxsize)
+                  i
+                  maxsize
+                  )
+                (if (> i maxsize)
+                  (:item ff)
+                  current
+                  )
+                )
+              )
       )
     )
   )
+
 
 (assert (= 41 (:current (findbelow 100))))
 
 (assert (= 953 (:current (findbelow 1000))))
 
-(time (findbelow 100000))
-
-(loop [i 2 amax 0]
-  (prn "i "i)
-  (cond
-    (= i 100) amax
-    :else (recur (inc i)
-                 (max amax
-                      (apply max
-                             (conj (filter (fn [x] (and
-                                                     (isprime x)
-                                                     (< x 100)
-                                                     )
-                                             )
-                                           (cumulsumbetween i 100)
-                                           )
-                                   0
-                                   )
-                             )
-                      )
-                 )
-    )
-  )
-
-(apply max (list))
-
-(max (list 1 2 3))
-
-(cumulsumbetween 2 100)
-
-(filter (fn [x] (and (isprime (:out x)) (< (:out x) 100))) (cumulsumbetween 2 100))
-
-(filter (fn [x] (and (isprime x) (< x 100))) (cumulsumbetween 5 100))
+;(findbelow 1000000)
 
