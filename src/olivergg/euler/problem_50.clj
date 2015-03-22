@@ -21,95 +21,104 @@
 
 (defn cumulsum
   [initcoll]
-  (loop [coll initcoll, cumulsum 0, out []]
+  (loop [coll initcoll, cumulsum 0, length 0, out []]
     (cond
-      (empty? coll) (subvec (conj out cumulsum) 1)
-      :else (recur (rest coll) (+ cumulsum (first coll)) (conj out cumulsum))
+      (empty? coll) (subvec (conj out {:sum cumulsum :length length}) 1)
+      :else (recur (rest coll) (+ cumulsum (first coll)) (inc length) (conj out {:sum cumulsum :length length}))
       )
     )
   )
 
 
-(defn cumulsumbetween [start end]
+
+(defn cumulsumprimes [start end]
   (cumulsum (filter #(isprime %) (range start end)))
   )
 
 
-(cumulsumbetween 2 1000)
-(drop 0 (map #(- % 0) (cumulsumbetween 2 1000)))
-(cumulsumbetween 3 1000)
-(drop 1 (map #(- % 2) (cumulsumbetween 2 1000)))
-(cumulsumbetween 5 1000)
-(drop 2 (map #(- % 5) (cumulsumbetween 2 1000)))
-(cumulsumbetween 7 1000)
-(drop 3 (map #(- % 10) (cumulsumbetween 2 1000)))
+
+;(filter #(and (isprime (:sum %)) (< (:sum %) 1000)) (cumulsumprimes 2 1000))
+;;{:sum 281, :length 14}
+;(filter #(and  (< (:sum %) 1000) (> (:sum %) 281) (>= (:length %) 15) (isprime (:sum %)))   (cumulsumprimes 3 1000))
+;; {:sum 499, :length 17}
+;(filter #(and  (< (:sum %) 1000) (> (:sum %) 499) (>= (:length %) 18) (isprime (:sum %)))   (cumulsumprimes 5 1000))
+;; {:sum 563, :length 17}
+;(filter #(and  (< (:sum %) 1000) (> (:sum %) 563) (>= (:length %) 18) (isprime (:sum %)))   (cumulsumprimes 7 1000))
+;;{:sum 953, :length 21}
+;
+;(empty? (intersection
+;          (into #{} (generate-prime-numbers 1000 953))
+;          (into #{} (cumulsumprimes 2 100))
+;          )
+;        )
+;;STOP
+(cumulsumprimes 2 1000)
+(generate-prime-numbers 1000 953)
+
+;
+;
+;(filter #(and (isprime (:sum %)) (< (:sum %) 1000000)) (cumulsumprimes 2 1000000))
+;;{:sum 281, :length 14}
+;(filter #(and  (< (:sum %) 1000000) (>= (:sum %) 958577) (>= (:length %) 537) (isprime (:sum %)))   (cumulsumprimes 3 1000000))
+;; continue
+;(filter #(and  (< (:sum %) 1000000) (>= (:sum %) 958577) (>= (:length %) 537) (isprime (:sum %)))   (cumulsumprimes 5 1000000))
+;; {:sum 978037, :length 539}
+;(filter #(and  (< (:sum %) 1000000) (>= (:sum %) 978037) (>= (:length %) 540) (isprime (:sum %)))   (cumulsumprimes 7 1000000))
+;;{:sum 997651, :length 543}
+;
+;(empty? (intersection
+;          (into #{} (generate-prime-numbers 1000000 997651))
+;          (into #{} (cumulsumprimes 2 1000000))
+;          )
+;        )
+;
+;; 997651
 
 
 
-(defn findlastcurr
-  [initcoll, someprimes, n]
-  (loop [coll initcoll
-         iter 0
-         lastvalidelem -1]
-    (cond
-      (or (empty? coll) (>= iter n)) {:item lastvalidelem :idx (dec iter)}
-      :else (do
-              (recur (rest coll)
-                     (if (and (isprime (first coll)) (< (first coll) n)) (inc iter) iter)
-                     (if (and (isprime (first coll)) (< (first coll) n))  (first coll) lastvalidelem ))
-
-              )
-
-      )
-    )
-  )
-
-(filter #(and (contains? initprimestoiter %) (< % 1000)) (cumulsumbetween 2 1000))
-(findlastcurr  (cumulsumbetween 2 1000) (generate-prime-numbers 1000 2) 1000)
-
-
-(defn findbelow
+(defn findlongestsum
   [n]
-  (def initprimestoiter (time (into (sorted-set 0) (generate-prime-numbers n 2))))
-  (def initcsumbetween (time (into [0] (cumulsumbetween 2 n))))
-  (loop [c 0 primestoiter initprimestoiter, maxsize 0, current 0]
-    (def iter (first primestoiter))
-    (cond
-      (nil? iter) {:length maxsize :current (dbg current) :count (dbg c)}
-      :else (do
-              (def csumbetween  (drop c (map #(- % (get initcsumbetween c)) (subvec initcsumbetween 1))))
-              ;(def curr (filter #(and (contains? initprimestoiter %) (< % n)) csumbetween))
-              ;(def i  (time ((fnil identity 0) (first (indexes-of (last curr) csumbetween )))))
-              ;(def i (count curr))
-              ;(println csumbetween)
-              ;(println (last curr))
-              ;(def lll (time (last curr)))
-              (def ff (findlastcurr csumbetween initprimestoiter n))
-              (def i (:idx ff))
-              ;(prn "c " c)
-              ;(prn "---")
-              (recur
-                (inc c)
-                (rest primestoiter)
-                ;(max maxsize (count curr)) curr
-                (if (> i maxsize)
-                  i
-                  maxsize
-                  )
-                (if (> i maxsize)
-                  (:item ff)
-                  current
-                  )
+  (loop [currentmaxsum 0
+         currentmaxlength 0
+         primestoiter (generate-prime-numbers 23 1)
+         ;stopcond false
+         ]
+        (if (or (empty? primestoiter)
+                ;stopcond
                 )
+          {:sum currentmaxsum :length currentmaxlength}
+          (do
+            (def p (first primestoiter))
+            (def cumulprimefromp (cumulsumprimes p n))
+            (def listtosearch (filter #(and
+                                        (< (:sum %) n)
+                                        (>= (:sum %) currentmaxsum)
+                                        (>= (:length %) currentmaxlength)
+                                        (isprime (:sum %)))
+                                      cumulprimefromp)
               )
-      )
-    )
+            (println (count listtosearch))
+            (def maxk (apply max-key :sum (if (empty? listtosearch) (list 0) listtosearch )))
+            (def newmaxsum (:sum maxk))
+            (def newmaxlength (:length maxk))
+            ;(def newstopcond (empty? (intersection
+            ;          (into #{} (generate-prime-numbers n currentmaxsum))
+            ;          (into #{} cumulprimefromp)
+            ;          )
+            ;        ))
+            (if (and (not (nil? newmaxsum))
+                     (not (nil? newmaxlength))
+                     (> newmaxlength currentmaxlength)
+                     (isprime newmaxsum)
+                     )
+              (recur newmaxsum newmaxlength (rest primestoiter))
+              (recur currentmaxsum currentmaxlength (rest primestoiter))
+              )
+            )
+          )
+        )
   )
+(count (filter #(and (isprime (:sum %)) (< (:sum %) 1000000))  (cumulsumprimes 2 1000000)))
 
-
-(assert (= 41 (:current (findbelow 100))))
-
-(assert (= 953 (:current (findbelow 1000))))
-
-;(findbelow 1000000)
-
+(time (findlongestsum 1000000))
+; {:sum 997651, :length 543}
