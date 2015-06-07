@@ -51,47 +51,60 @@
 
 (defn mulpol
   "Polynomial multiplication. The result is also a polynomial"
- [pol1, pol2]
- (simplify (mulpolExpand pol1 pol2))
- )
-
-
-(defn genvecforn
- "Generates a list of size n that starts with 1 followed by a sequence of 0.
-  e.g. : n = 4 => '(1 0 0 0)
-  "
-  [n]
-  (conj (repeat (- n 1) 0) 1)
+  [pol1, pol2]
+  (simplify (mulpolExpand pol1 pol2))
   )
-
-
 
 
 (defn expand-geomseries
-  "Expand the series 1/1-x^n up to the given maximum degree maxpow
+  "let's remind that (1/(1-x)) = 1 + x + x^2 + x^3 + x^4 + .... = [1 1 1 1 1 .... ]
+  Hence, (1/(1-x^2)) = 1 + x^2 + x^4 + x^6 + .... = [1 0 1 0 1 0 1 ... ]
+  Expand the series 1/1-x^n up into a polynomial and only keep terms below the given maxpow power
   e.g : 1/1-x^2 => n=2, maxpow=10 => [1 0 1 0 1 0 1 0 1 0 1]
   "
-  [n,maxpow]
-  (into [] (take (inc maxpow) (mapcat flatten (repeat (genvecforn n)))))
+  [n, maxpow]
+  (into []
+        (take (+ maxpow 1)
+              (map (fn [p] (if (pos? (mod p n)) 0 1))
+                   (range)
+                   )
+              )
+        )
   )
 
 
-(defn generatingfunc
-  [authelems]
-  (def maxelem (first authelems))
-  (reduce mulpol (map (fn[x] (expand-geomseries x maxelem)) authelems))
+
+(defn expand-pn-generatingfunc
+  "If T is a set of positive integers then the number of partitions of n, all of whose parts belong to T, has generating function
+   Π ( 1  - x ^ t ) ^ (-1) ) for every t in T which can be expanded into a polynomial expression.
+   T must be a list of positive integer in descending order.
+   maxpow : only keep terms below the given power during polynomial expansion.
+  "
+  [T, maxpow]
+  (reduce mulpol
+          (map (fn [n] (expand-geomseries n maxpow))
+               T
+               )
+          )
   )
 
-(defn getnbpart
-  [authelems]
-  ((generatingfunc authelems) (first authelems))
+(defn solution
+  "Helper function to get the solution.
+  The solution is the coefficient of the x^p terms in the expanded polynomial obtained with expand-pn-generatingfunc
+  "
+  [T]
+  (let [maxpow (first T)
+        p (first T)
+        ]
+    ((expand-pn-generatingfunc T maxpow) p)
+    )
   )
 
-(getnbpart (list 10 5 2 1))
+(solution (list 10 5 2 1))
 
-(getnbpart (list 20 10 5 2 1))
+(solution (list 20 10 5 2 1))
 
-(getnbpart (list 200 100 50 20 10 5 2 1))
+(solution (list 200 100 50 20 10 5 2 1))
 ;73682
 
 
