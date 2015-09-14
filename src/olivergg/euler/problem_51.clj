@@ -1,7 +1,7 @@
 (ns olivergg.euler.problem_51
   (:require [olivergg.euler.common :refer :all]
-            [clojure.set :refer :all]
-            )
+    [clojure.set :refer :all]
+    )
   )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -19,39 +19,60 @@
 ; Find the smallest prime which, by replacing part of the number (not necessarily adjacent digits)
 ; with the same digit, is part of an eight prime value family.
 
-
-(defn hasuniquedigit[n]
-  (def initlist (tobase10 n))
-  (def refdigit (first initlist))
-  (loop [nlist (rest initlist), out true]
-    (do
-      (if (or (not out) (empty? nlist))
-        out
-        (recur (rest nlist) (or (zero? (first nlist)) (= (first nlist) refdigit)))
-        )
-      )
+(defn has-repeating-digits[n,dig, rep]
+  (->> (tobase10 n)
+    (group-by identity)
+    (filter #(= dig (% 0)))
+    (map (fn[s] (count (s 1))))
+    (some #(= % rep))
     )
   )
 
 
 
-(def pri (generate-prime-numbers 57000 56000))
 
-(def candidates
-  (let [v (atom [])]
-    (doseq [x pri
-            y pri
-            :when (> x y)
-            ]
-      (if (hasuniquedigit (Math/abs (- x y)))
-        (swap! v conj (->item x y (Math/abs (- x y))))
-        )
-      )
-    @v)
+(defn replace-digits[n,dig,rep]
+  (->> (tobase10 n)
+    (replace {dig rep})
+    (frombase10)
+    )
   )
-;( - 56003 56113 56333 56443 56663 56773 56993 )
 
-(map (fn[row] (println (map (fn[i] (str (:val i) "(" (:row i) "," (:col i)  ")" )) row))  )  candidates)
-;;; TODO : remove elements for which the hamming distance is too big.
 
-;;; WIP
+(defn gen-family[n, dig]
+  (for [i (range 0 10)
+        :let [replaced (replace-digits n dig i)]
+        :when (and (> (quot replaced 100000) 0) (isprime replaced))
+        ]
+    replaced
+    )
+  )
+
+
+(time
+  (do
+
+    (def pri (generate-prime-numbers 999999 100000))
+
+
+    (first (filter #(not-empty %) (for [dig (range 0 10)
+                                        rep (range 1 6)
+                                        ]
+                                    (filter #(= 8 (count %))
+                                      (map #(gen-family % dig)
+                                        (filter #(has-repeating-digits % dig rep) pri)
+                                        )
+                                      )
+                                    )
+             )
+      )
+    )
+  )
+
+;; 121313
+
+
+
+
+
+
