@@ -40,14 +40,13 @@
 (defn cnk-plus [n k] {:n n :k k :res (cnk n k)})
 
 (defn get-first-above-million[n]
-  (first
-   (drop-while #(< (:res %) 1E6)
-               (map #(cnk-plus n %)
-                    (range 0 (inc n))
-                    )
-               )
-   )
+  (->> (range 0 (inc n))
+      (map #(cnk-plus n %))
+      (drop-while #(< (:res %) 1E6))
+      (first)
+      )
   )
+
 
 
 (assert (nil? (get-first-above-million 22)))
@@ -75,9 +74,9 @@
   )
 
 
-
-;(get-number-of-cnk-abovemillion 25)
-
-(reduce + (map #(get-number-of-cnk-abovemillion %) (range 23 101)))
+(->> (range 23 101)
+     (map #(get-number-of-cnk-abovemillion %))
+     (reduce +)
+)
 
 ;; 4075
