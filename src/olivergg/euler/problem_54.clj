@@ -1,8 +1,11 @@
 (ns olivergg.euler.problem_54
-  (:require [olivergg.euler.common :refer :all]
-            [clojure.set :refer :all]
+  (:require [olivergg.euler.common :as common]
+            [clojure.set :as set]
             )
   )
+
+
+
 
 ;; In the card game poker, a hand consists of five cards and are ranked, from lowest to highest, in the following way:
 
@@ -69,12 +72,12 @@
 
 
 (defmulti card (fn ([v s] [(class v) (class s)])))
-
 (defmethod card [Long String]
   [v s] {:value v :suit s})
-
 (defmethod card [String String]
   [v s] {:value (cardvals v) :suit s})
+
+
 
 (card "4" "H")
 
@@ -90,26 +93,31 @@
     )
   )
 
+
+(defn strhand-to-hand[astr]
+  (clojure.string/split astr #" ")
+  )
+
+(assert (= ["5H" "5C" "6S" "7S" "KD"] (strhand-to-hand "5H 5C 6S 7S KD")))
+
+
 (defn c[strcard] (str-to-card strcard))
 
 
+(defn cs
+  "Convert a string that represents a list of cards in their string representation into a list of {:value X :suit Y}"
+  [strhand]
+  (map #(c %) (strhand-to-hand strhand))
+  )
 
-(let [card (str-to-card "6C")
+
+(let [card (c "6C")
       v (:value card)
       s (:suit card)
       ]
   (assert (= 6 v))
   (assert (= "C" s))
   )
-
-
-
-(defn cards>=
-  "Check if card1 value is greater than the card2 one"
-  [card1 card2]
-  (>= (cardscomp card1 card2) 0)
-  )
-
 
 (defn cardscomp
   [card1 card2]
@@ -120,6 +128,15 @@
     (Integer/signum (- card1val card2val))
     )
   )
+
+
+(defn cards>=
+  "Check if card1 value is greater than the card2 one"
+  [card1 card2]
+  (>= (cardscomp card1 card2) 0)
+  )
+
+
 
 
 
@@ -135,8 +152,7 @@
 
 
 
-(sortcards [(c "JS")  (c "QS") (c "AS") (c "KS") (c "TS")])
-
+(sortcards (cs "JS QS AS KS TS"))
 (defn is-flush[coll]
   (->> coll
        (map #(:suit %))
@@ -148,13 +164,13 @@
 
 
 
-(assert (is-flush [(c "6D") (c "3D") (c "7D") (c "TD") (c "QD")]))
-(assert (not (is-flush [(c "6D") (c "3D") (c "7D") (c "TD") (c "QS")])))
+(assert (is-flush (cs "6D 3D 7D TD QD")))
+(assert (not (is-flush (cs "6D 3D 7D TD QS"))))
 
 (defn is-straight[coll]
   (let [
         sortedcoll (sortcards coll)
-        thevals (map #(:value (str-to-card %)) sortedcoll)
+        thevals (map #(:value %) sortedcoll)
         firstv (first thevals)
         thealteredvals (map #(- % firstv) thevals)
         ]
@@ -164,8 +180,10 @@
 
 
 
-(assert (is-straight '( "JS" "QS" "TS" "KS" "AS")))
-(assert (not (is-straight '( "8S" "QS" "TS" "KS" "AS"))))
+(cs "JS QS TS KS AS")
+
+(assert (is-straight (cs "JS QS TS KS AS")))
+(assert (not (is-straight (cs "8S QS TS KS AS"))))
 
 
 (defn is-straight-flush[coll]
@@ -180,25 +198,24 @@
   (and
    (is-straight-flush hand)
    (= 1 (->> hand
-             (filter #(= 10 (:value (str-to-card %))))
+             (filter #(= 10 (:value %)))
              (count)
              )
       )
    )
   )
 
-(assert (is-royal-flush '( "JS" "QS" "TS" "KS" "AS")))
-(assert (not (is-royal-flush '( "JS" "QS" "TS" "KS" "AD"))))
-(assert (not (is-royal-flush '( "JS" "QS" "9S" "KS" "AS"))))
-(assert (not (is-royal-flush '( "1S" "QS" "TS" "KS" "AS"))))
+(assert (is-royal-flush (cs "JS QS TS KS AS")))
+(assert (not (is-royal-flush (cs "JS QS TS KS AD"))))
+(assert (not (is-royal-flush (cs "JS QS 9S KS AS"))))
+(assert (not (is-royal-flush (cs "1S QS TS KS AS"))))
 
 
 
 
 (defn is-n-of-a-kind[n, hand]
   (let [
-        ;;sortedcoll (sortcards hand)
-        thevals (map #(:value (str-to-card %)) hand)
+        thevals (map #(:value %) hand)
         groupedbyval (group-by identity thevals)
         countval (into #{} (map #(count %) (vals groupedbyval)))
         ]
@@ -211,21 +228,21 @@
 
 
 
-(assert (is-four-of-a-kind '( "JS" "JD" "JH" "JC" "AS")))
-(assert (not (is-four-of-a-kind '( "JS" "JD" "JH" "TC" "AS"))))
+(assert (is-four-of-a-kind (cs "JS JD JH JC AS")))
+(assert (not (is-four-of-a-kind (cs "JS JD JH TC AS"))))
 
 
 
 (defn is-three-of-a-kind[hand] (is-n-of-a-kind 3 hand))
 
-(assert (is-three-of-a-kind '("5S" "5D" "5H" "QS" "KD")))
-(assert (not (is-three-of-a-kind '("5S" "5D" "6H" "QS" "KD"))))
+(assert (is-three-of-a-kind (cs "5S 5D 5H QS KD")))
+(assert (not (is-three-of-a-kind (cs "5S 5D 6H QS KD"))))
 
 
 
 (defn is-pair[hand] (is-n-of-a-kind 2 hand))
 
-(assert (is-pair '("5S" "5D" "4H" "QS" "KD")))
+(assert (is-pair (cs "5S 5D 4H QS KD")))
 
 
 
@@ -238,12 +255,12 @@
    )
   )
 
-(assert (is-full-house '("5S" "5D" "5H" "KS" "KD")))
+(assert (is-full-house (cs "5S 5D 5H KS KD")))
 
 
 
 (defn is-two-pairs[hand]
-  (let [thevals (map #(:value (str-to-card %)) hand)
+  (let [thevals (map #(:value %) hand)
         groupedbyval (group-by identity thevals)
         t (map #(count %) (vals groupedbyval))
         [a b c] (sort t)
@@ -252,45 +269,49 @@
     )
   )
 
-(assert (is-two-pairs '("7H" "7S" "2H" "8D" "8C")))
-(assert (not (is-two-pairs '("7H" "7S" "2H" "8D" "6C"))))
+(assert (is-two-pairs (cs "7H 7S 2H 8D 8C")))
+(assert (not (is-two-pairs (cs "7H 7S 2H 8D 6C"))))
 
 
 
 (defn get-highest-value-card [hand]
   (last (sortcards hand))
   )
+(get-highest-value-card (cs "7H 7S 2H 8D 6C"))
 
 (defn get-highest-card-value [hand]
-  (:value (str-to-card (get-highest-value-card hand)))
+  (:value (get-highest-value-card hand))
   )
 
-(assert (= "8D" (get-highest-value-card ["7H" "7S" "2H" "8D" "6C"])))
-(assert (= "KS" (get-highest-value-card '("7H" "KS" "2H" "8D" "6C"))))
-(assert (= "AH" (get-highest-value-card '("7H" "KS" "AH" "8D" "6C"))))
+(assert (= (c "8D") (get-highest-value-card (cs "7H 7S 2H 8D 6C"))))
+(assert (= (c "KS") (get-highest-value-card (cs "7H KS 2H 8D 6C"))))
+(assert (= (c "AH") (get-highest-value-card (cs "7H KS AH 8D 6C"))))
 
 
 
-
-(defn strhand-to-hand[astr]
-  (clojure.string/split astr #" ")
-  )
-
-(assert (= ["5H" "5C" "6S" "7S" "KD"] (strhand-to-hand "5H 5C 6S 7S KD")))
 
 
 (defn linetohands[aline]
-  (let [allhands (strhand-to-hand aline)
+  (let [allhands (into [] (cs aline))
         c (count allhands)
         half (/ c 2)
         h1 (subvec allhands 0 half)
         h2 (subvec allhands half c)
         ]
-    [h1 h2]
+    [(sortcards h1) (sortcards h2)]
     )
   )
 
-(assert (= [["8C" "TS" "KC" "9H" "4S"] ["7D" "2S" "5D" "3S" "AC"]] (linetohands "8C TS KC 9H 4S 7D 2S 5D 3S AC")))
+
+(let [ltoh (linetohands "8C TS KC 9H 4S 7D 2S 5D 3S AC")
+      h1 (first ltoh)
+      h2 (last ltoh)
+      firstofh1 (first h1)
+      firstofh2 (first h2)
+      ]
+  (assert (= 4 (:value firstofh1)))
+  (assert (= 2 (:value firstofh2)))
+  )
 
 
 
@@ -310,21 +331,14 @@
   )
 
 
-(assert (= 2 (get-rank (strhand-to-hand "2C 3S 8S 8D TD"))))
-(assert (= 7 (get-rank (strhand-to-hand "3C 3D 3S 9S 9D"))))
+(assert (= 2 (get-rank (cs "2C 3S 8S 8D TD"))))
+(assert (= 7 (get-rank (cs "3C 3D 3S 9S 9D"))))
+
+
 
 
 
 (defn tie-break-on-highest-card-value[hand1 hand2]
-  (let [val1 (get-highest-card-value hand1)
-        val2 (get-highest-card-value hand2)
-        ]
-    (if (> val1 val2) 1 2)
-    )
-  )
-
-
-(defn compare-hands[hand1 hand2]
   (let [sortedhand1 (reverse (sortcards hand1))
         sortedhand2 (reverse (sortcards hand2))
         first1 (first sortedhand1)
@@ -341,41 +355,36 @@
   )
 
 
-(assert (= 0 (compare-hands ["AD" "TS"] ["AH" "TS"])))
-(assert (= 2 (compare-hands ["AD" "TS"] ["AH" "QS"])))
-(assert (= 1 (compare-hands ["AD" "TS"] ["AH" "3S"])))
+(assert (= 0 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH TS"))))
+(assert (= 2 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH QS"))))
+(assert (= 1 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH 3S"))))
+
+
 
 
 (defn tie-break-on-pair[hand1 hand2]
   (let [
-        thevals1 (map #(:value (str-to-card %)) (sortcards hand1))
-        freq1 (group-by val (frequencies thevals1))
-        pair1 (first (freq1 2))
-        pairval1 (first pair1)
+        groupedby1 (group-by #(:value %) hand1)
+        pairs1 (filter #(= 2 (count (val %))) groupedby1)
+        remains1 (flatten (vals (filter #(not= 2 (count (val %))) groupedby1)))
+        pairval1 (key (first pairs1))
 
-        thevals2 (map #(:value (str-to-card %)) (sortcards hand2))
-        freq2 (group-by val (frequencies thevals2))
-        pair2 (first (freq2 2))
-        pairval2 (first pair2)
-        ;;         pairA (first pairs)
-        ;;         pairB (second pairs)
+
+
+        groupedby2 (group-by #(:value %) hand2)
+        pairs2 (filter #(= 2 (count (val %))) groupedby2)
+        remains2 (flatten (vals (filter #(not= 2 (count (val %))) groupedby2)))
+        pairval2 (key (first pairs2))
 
         ]
     1
-    ;pairval1
     (cond
      (> pairval1 pairval2) 1
      (< pairval1 pairval2) 2
-     (= pairval1 pairval2) 0;;; TODO : tie break sur card value sur le autres cartes
-
-     ;;      (cardscomp
-
-
+     (= pairval1 pairval2) (tie-break-on-highest-card-value remains1 remains2);;; TODO : tie break sur card value sur le autres cartes
      )
     )
   )
-
-(dissoc {3 4 2 1} 3)
 
 
 
@@ -383,7 +392,6 @@
   (cond
    (= 1 rank) (tie-break-on-highest-card-value hand1 hand2)
    (= 2 rank) (tie-break-on-pair hand1 hand2)
-   ;(= 3 rank) (tie-break-on-pairs hand1 hand2)
    :else 0
    )
   )
@@ -393,7 +401,6 @@
         rank1 (get-rank h1)
         rank2 (get-rank h2)
         ]
-    ;[rank1 rank2]
     (cond
      (> rank1 rank2) 1
      (> rank2 rank1) 2
@@ -404,20 +411,9 @@
 
 
 
-;(get-winner [["8C" "TS" "AC" "5H" "4S"] ["7D" "2S" "5D" "3S" "TC"]])
-(get-winner [["6C" "TS" "TC" "8H" "4S"] ["TD" "7S" "5D" "3S" "TC"]])
-;(get-winner [["8C" "TS" "TC" "8H" "4S"] ["7D" "7S" "5D" "TS" "TC"]])
+(assert (= 1 (get-winner [(cs "6C TS TC 8H 4S") (cs "TD 7S 5D 3S TC")])))
 
-
-
-
-
-
-
-
-
-
-
+(assert (= 2 (get-winner [(cs "AC TS 2C 5H 4S") (cs "7D AS 5D 3S TC")])))
 
 
 
