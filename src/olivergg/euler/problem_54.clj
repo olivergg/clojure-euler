@@ -2,9 +2,10 @@
   (:require [olivergg.euler.common :as common]
             [clojure.set :as set]
             )
+
   )
 
-
+(timbre/refer-timbre)
 
 
 ;; In the card game poker, a hand consists of five cards and are ranked, from lowest to highest, in the following way:
@@ -361,27 +362,32 @@
 
 
 
+(defn get-pairval-and-remains[hand]
+  (let [
+        groupedby (group-by #(:value %) hand)
+        pairs (filter #(= 2 (count (val %))) groupedby)
+        remains (flatten (vals (filter #(not= 2 (count (val %))) groupedby)))
+        pairval (key (first pairs))
+        ]
+    {:pairval pairval :remains remains}
+    )
+  )
 
 (defn tie-break-on-pair[hand1 hand2]
-  (let [
-        groupedby1 (group-by #(:value %) hand1)
-        pairs1 (filter #(= 2 (count (val %))) groupedby1)
-        remains1 (flatten (vals (filter #(not= 2 (count (val %))) groupedby1)))
-        pairval1 (key (first pairs1))
+  (let [temp1 (get-pairval-and-remains hand1)
+        remains1 (:remains temp1)
+        pairval1 (:pairval temp1)
 
-
-
-        groupedby2 (group-by #(:value %) hand2)
-        pairs2 (filter #(= 2 (count (val %))) groupedby2)
-        remains2 (flatten (vals (filter #(not= 2 (count (val %))) groupedby2)))
-        pairval2 (key (first pairs2))
+        temp2 (get-pairval-and-remains hand2)
+        remains2 (:remains temp2)
+        pairval2 (:pairval temp2)
 
         ]
-    1
+    (debug pairval1 pairval2)
     (cond
      (> pairval1 pairval2) 1
      (< pairval1 pairval2) 2
-     (= pairval1 pairval2) (tie-break-on-highest-card-value remains1 remains2);;; TODO : tie break sur card value sur le autres cartes
+     (= pairval1 pairval2) (tie-break-on-highest-card-value remains1 remains2)
      )
     )
   )
@@ -411,9 +417,23 @@
 
 
 
-(assert (= 1 (get-winner [(cs "6C TS TC 8H 4S") (cs "TD 7S 5D 3S TC")])))
+
 
 (assert (= 2 (get-winner [(cs "AC TS 2C 5H 4S") (cs "7D AS 5D 3S TC")])))
+
+(assert (= 1 (get-winner [(cs "6C TS TC 8H 4S") (cs "TD 7S 5D 3S TC")])))
+
+(assert (= 2 (get-winner [(cs "5H 5C 6S 7S KD") (cs "2C 3S 8S 8D TD")])))
+
+(assert (= 1 (get-winner [(cs "5D 8C 9S JS AC") (cs "2C 5C 7D 8S QH")])))
+
+
+
+
+
+
+
+
 
 
 
