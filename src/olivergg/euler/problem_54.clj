@@ -1,9 +1,12 @@
 (ns olivergg.euler.problem_54
-  (:require [olivergg.euler.common :as common]
-            [clojure.set :as set]
+  (:require [olivergg.euler.common :refer :all]
+            [clojure.set :refer :all]
+            [taoensso.timbre :as timbre]
+            [clojure.java.io :refer :all :as io]
+            [clojure.string :as str]
             )
-
   )
+
 
 (timbre/refer-timbre)
 
@@ -175,7 +178,9 @@
         firstv (first thevals)
         thealteredvals (map #(- % firstv) thevals)
         ]
-    (= '(0 1 2 3 4) thealteredvals)
+    (or (= '(0 1 2 3 4) thealteredvals)
+        (= '(0 1 2 3 12) thealteredvals) ;; Baby Straight
+        )
     )
   )
 
@@ -184,7 +189,10 @@
 (cs "JS QS TS KS AS")
 
 (assert (is-straight (cs "JS QS TS KS AS")))
+(assert (is-straight (cs "AS 2S 3S 4D 5S")))
 (assert (not (is-straight (cs "8S QS TS KS AS"))))
+(assert (not (is-straight (cs "AS KS 3S 4D 5S"))))
+
 
 
 (defn is-straight-flush[coll]
@@ -316,6 +324,142 @@
 
 
 
+
+
+
+
+(defn get-pairval-and-remains
+  "Get the value of the unique pair of the hand and the remaining hand"
+  [hand]
+  (let [
+        groupedby (group-by #(:value %) hand)
+        pairs (filter #(= 2 (count (val %))) groupedby)
+        remains (flatten (vals (filter #(not= 2 (count (val %))) groupedby)))
+        pairval (key (first pairs))
+        ]
+    {:cmpval pairval :remains remains}
+    )
+  )
+
+(defn get-highestpairval-and-remains
+  "Get the value of the highest pair of the hand (assuming there are two pairs in it) and the remaining hand"
+  [hand]
+  (let [
+        groupedby (group-by #(:value %) hand)
+        sortedpairs (sort-by #(key %) (filter #(= 2 (count (val %))) groupedby))
+        pairval (key  (last sortedpairs))
+        remains (flatten
+                 (vals
+                  (conj (filter #(not= 2 (count (val %)))
+                                groupedby
+                                )
+                        (first sortedpairs)
+                        )
+                  )
+                 )
+        ]
+    {:cmpval pairval :remains remains}
+    )
+  )
+
+(defn get-threeofkindval-and-remains
+  [hand]
+
+  (let [
+        groupedby (group-by #(:value %) hand)
+        triplet (filter #(= 3 (count (val %))) groupedby)
+        tripletval (key (first triplet))
+        remains (flatten(vals(filter #(not= 3 (count (val %)))groupedby)))
+        ]
+    {:cmpval tripletval :remains remains}
+    )
+
+  )
+
+
+(defn get-highest-value-and-remains[hand]
+  (let [sortedcards (sortcards hand)
+        highestval (last sortedcards)
+        cmp (if (nil? highestval) 0 (:value highestval))
+        ]
+    {:cmpval cmp :remains (remove #(= % highestval) hand)}
+    )
+  )
+
+(defn get-fourofkind-value-and-remains[hand]
+  (let [
+        groupedby (group-by #(:value %) hand)
+        quartet (filter #(= 4 (count (val %))) groupedby)
+        quartetval (key (first quartet))
+        remains (flatten(vals(filter #(not= 4 (count (val %)))groupedby)))
+        ]
+    {:cmpval quartetval :remains remains}
+    )
+  )
+
+
+
+
+
+(defn tie-break-on-functions[hand1 hand2 fvalremains ftiebreak]
+  (let [temp1 (profiling/p :fvalremains (fvalremains hand1))
+        remains1 (:remains temp1)
+        cmpval1 (:cmpval temp1)
+
+        temp2 (profiling/p :fvalremains (fvalremains hand2))
+        remains2 (:remains temp2)
+        cmpval2 (:cmpval temp2)
+
+        ]
+    ;(debug cmpval1 cmpval2)
+    (cond
+     (> cmpval1 cmpval2) 1
+     (< cmpval1 cmpval2) 2
+     (and (seq remains1) (seq remains2) (= cmpval1 cmpval2)) (ftiebreak remains1 remains2)
+     :else 0
+     )
+    )
+  )
+
+
+
+(defn tie-break-on-highest-card-value
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-highest-value-and-remains tie-break-on-highest-card-value)
+  )
+(assert (= 0 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH TS"))))
+(assert (= 2 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH QS"))))
+(assert (= 1 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH 3S"))))
+
+
+(defn tie-break-on-pair
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-pairval-and-remains tie-break-on-highest-card-value)
+  )
+
+
+(defn tie-break-on-two-pairs
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-highestpairval-and-remains tie-break-on-pair)
+  )
+
+
+(defn tie-break-on-three-of-a-kind
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-threeofkindval-and-remains tie-break-on-highest-card-value)
+  )
+
+(defn tie-break-on-full-house
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-threeofkindval-and-remains tie-break-on-pair)
+  )
+
+
+(defn tie-break-on-four-of-a-kind
+  [hand1 hand2]
+  (tie-break-on-functions hand1 hand2 get-fourofkind-value-and-remains tie-break-on-highest-card-value)
+  )
+
 (defn get-rank[hand]
   (cond
    (is-royal-flush hand) 10
@@ -338,66 +482,18 @@
 
 
 
-
-(defn tie-break-on-highest-card-value[hand1 hand2]
-  (let [sortedhand1 (reverse (sortcards hand1))
-        sortedhand2 (reverse (sortcards hand2))
-        first1 (first sortedhand1)
-        first2 (first sortedhand2)
-        cmp (if (nil? first1) 0 (cardscomp first1 first2))
-        ]
-    (cond
-     (and (empty? sortedhand1) (empty? sortedhand2)) 0
-     (= 0 cmp) (recur (rest sortedhand1) (rest sortedhand2))
-     (= 1 cmp) 1
-     (= -1 cmp) 2
-     )
-    )
-  )
-
-
-(assert (= 0 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH TS"))))
-(assert (= 2 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH QS"))))
-(assert (= 1 (tie-break-on-highest-card-value (cs "AD TS") (cs "AH 3S"))))
-
-
-
-(defn get-pairval-and-remains[hand]
-  (let [
-        groupedby (group-by #(:value %) hand)
-        pairs (filter #(= 2 (count (val %))) groupedby)
-        remains (flatten (vals (filter #(not= 2 (count (val %))) groupedby)))
-        pairval (key (first pairs))
-        ]
-    {:pairval pairval :remains remains}
-    )
-  )
-
-(defn tie-break-on-pair[hand1 hand2]
-  (let [temp1 (get-pairval-and-remains hand1)
-        remains1 (:remains temp1)
-        pairval1 (:pairval temp1)
-
-        temp2 (get-pairval-and-remains hand2)
-        remains2 (:remains temp2)
-        pairval2 (:pairval temp2)
-
-        ]
-    (debug pairval1 pairval2)
-    (cond
-     (> pairval1 pairval2) 1
-     (< pairval1 pairval2) 2
-     (= pairval1 pairval2) (tie-break-on-highest-card-value remains1 remains2)
-     )
-    )
-  )
-
-
-
 (defn tie-break[rank hand1 hand2]
   (cond
    (= 1 rank) (tie-break-on-highest-card-value hand1 hand2)
    (= 2 rank) (tie-break-on-pair hand1 hand2)
+   (= 3 rank) (tie-break-on-two-pairs hand1 hand2)
+   (= 4 rank) (tie-break-on-three-of-a-kind hand1 hand2)
+   (= 5 rank) (tie-break-on-highest-card-value hand1 hand2)
+   (= 6 rank) (tie-break-on-highest-card-value hand1 hand2)
+   (= 7 rank) (tie-break-on-full-house hand1 hand2)
+   (= 8 rank) (tie-break-on-four-of-a-kind hand1 hand2)
+   (= 9 rank) (tie-break-on-highest-card-value hand1 hand2)
+   (= 10 rank) 0
    :else 0
    )
   )
@@ -418,7 +514,6 @@
 
 
 
-
 (assert (= 2 (get-winner [(cs "AC TS 2C 5H 4S") (cs "7D AS 5D 3S TC")])))
 
 (assert (= 1 (get-winner [(cs "6C TS TC 8H 4S") (cs "TD 7S 5D 3S TC")])))
@@ -427,14 +522,46 @@
 
 (assert (= 1 (get-winner [(cs "5D 8C 9S JS AC") (cs "2C 5C 7D 8S QH")])))
 
+(assert (= 2 (get-winner [(cs "TS TH 9D 9S 3H") (cs "TS TH 9D 9S 4H")])))
+
+(assert (= 1 (get-winner [(cs "TS TH 9D 9S 3H") (cs "TS TH 8D 8S 4H")])))
+
+(assert (= 2 (get-winner [(cs "TS TH 9D 9S 3H") (cs "QS QH 8D 8S 4H")])))
+
+(assert (= 1 (get-winner [(cs "TS TD TH 3D 2D") (cs "9S 9D 9H 2D 5S")])))
+
+(assert (= 2 (get-winner [(cs "TS TD TH 3D 2D") (cs "TS TD TH 2D 4S")])))
+
+(assert (= 1 (get-winner [(cs "TS TD TH 3D 5D") (cs "TS TD TH 3D 4S")])))
+
+(assert (= 1 (get-winner [(cs "AS KD QH JH TH") (cs "KD QH JH TH 9D")])))
+
+(assert (= 2 (get-winner [(cs "7S 6D 5H 4H 3H") (cs "KD QH JH TH 9D")])))
+
+(assert (= 2 (get-winner [(cs "7S 7D 7H 4H 4D") (cs "KD KH KS 8H 8D")])))
+
+(assert (= 2 (get-winner [(cs "KS KD KH 4H 4D") (cs "KD KH KS 8H 8D")])))
+
+(assert (= 1 (get-winner [(cs "KS KD KH 4H 4D") (cs "1D 1H 1S 8H 8D")])))
+
+(assert (= 1 (get-winner [(cs "KS KD KH KC 3D") (cs "QS QD QH QC 9S")])))
+
+(assert (= 2 (get-winner [(cs "KS KD KH KC 3D") (cs "KS KD KH KC 9S")])))
+
+(assert (= 2 (get-winner [(cs "KS KD KH KC 3D") (cs "AS AD AH AC 9S")])))
 
 
 
+(with-open [rdr (reader (io/resource "p054_poker.txt"))]
+  (count (filter #(= 1 %)
+                 (for [line (line-seq rdr)]
+                   (-> line
+                        (linetohands)
+                        (get-winner)
+                        )
+                   )
+                 )
+         )
+  )
 
-
-
-
-
-
-
-
+; 376
