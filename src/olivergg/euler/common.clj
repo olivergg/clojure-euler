@@ -237,3 +237,9 @@
 
 (defn parse-int [s]  (Long. (re-find  #"\d+" s )))
 
+(defn str-reverse [s] (apply str (reverse s)))
+
+(defn ispalindromic
+  [n]
+  (= (str n) (str-reverse (str n)))
+  )

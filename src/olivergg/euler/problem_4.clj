@@ -7,12 +7,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn str-reverse [s] (apply str (reverse s)))
 
-(defn ispalindromic
-  [n]
-  (= (str n) (str-reverse (str n)))
-  )
+
 
 ;; must be between 100 x 100 and  999 x 999
 ;; more likely to be closest to 1000000 so we start at the end (using negative index in the range).
